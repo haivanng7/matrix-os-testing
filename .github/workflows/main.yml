@@ -1,0 +1,40 @@
+name: Cross-OS Testing and Code Coverage
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-test:
+    # Chạy trên 3 hệ điều hành khác nhau
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # Lệnh verify sẽ chạy test và kích hoạt JaCoCo check
+      - name: Build with Maven
+        run: mvn clean verify
+
+      # Bước này sẽ đẩy báo cáo JaCoCo lên tab Artifacts
+      - name: Upload JaCoCo Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report-${{ matrix.os }}
+          path: target/site/jacoco/
